@@ -1,4 +1,4 @@
-.PHONY env
+.PHONY: env
 
 # Make environment for the first time
 env:

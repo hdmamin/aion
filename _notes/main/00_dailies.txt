@@ -1,0 +1,121 @@
+11/1/25 sat
+-----------
+X -pick project
+X -pick repo name
+X -create repo
+	> nanochat is still under development. Going with a git subtree to try to allow me to pull changes later while keeping it as one part of a larger repo. Will see how this goes.
+X -add collaborator to repo
+
+11/2/25 sun
+-----------
+X -skim llm personality paper
+	> not super helpful, but one idea stands out a bit: about the relevance of score stability vs the scores themselves when measuring personality. "consistent sense of self"
+X -update repo quote
+X -update repo name spelling
+X -premortem
+	> note: at this stage my commitment has an asterisk, namely, can I get a satisfactory (not overly annoying or prohibitively expensive) compute setup working. Try to get signal on this early, if not might pivot to auren ide/glasses/robot.
+-gpu setup
+	-try cloning onto gpu
+	-try pushing from gpu
+-add more todos below
+
+11/3/25 mon
+-----------
+-gpu setup
+	-try cloning onto gpu
+	-try pushing from gpu
+	-try pulling dataset from huggingface hub
+	-try pushing huggingface model to hub
+~ -hugginface hub setup:
+	X -create collection
+	X -create model repo and add it to collection
+	X -create api key with fine grained access
+		> ended up giving this pretty broad permissions, don't think I could easily allow creating new model repos otherwise. /shrug
+	~ -make api key accessible somewhere? (gcp block secrets? 😬 personal google drive? none of these options seem great)
+		> thinking maybe store all secrets in infisical, then can think about what to do with that one api key that gates the others. At least introduces another layer that makes it less likely for someone to randomly stumble across personal data at block later. Maybe store that as env var on vm zshrc /shrug.
+~ -start creating aeon subdir package so I can build out functionality without colliding with nanochat while it's under dev
+	> created barebones pyproject.toml. Still lots to figure out, can flesh this out with cursor/claude code help.
+X -assess spiralbench as another datasource
+	> notes in misc.txt for the same date. Looks promising. gpt-oss is a disappointment though.
+-add more todos below:
+
+> tldr: played w/ spiral bench prompts; lots of hugginface and infisical secrets setup
+
+11/4/25 tues
+------------
+-block device setup
+	X -secrets setup
+		X -add infisical api key to:
+			X -block mac zshrc env var
+			X -local bashrc env var
+		X -try loading HUGGINGFACE_TOKEN using infisical sdk
+	X -try git cloning
+	X -try git pushing
+	-try pulling dataset from huggingface hub
+	-try pushing huggingface model to hub
+	-reproduce all of the above on gpu workstation
+X -create aeon venv (consider: should I try to make it a lib level env, then require that in nanochat env? Or one parent env containing both? Maybe best to start with env just for aeon, don't touch nanochat yet, then can treat my lib like just another nanochat dep)
+	> created barebones pyproject.toml. Still lots to figure out, can flesh this out with cursor/claude code help.
+X -secrets module
+X -logger module
+X -tweak repo quote
+-dataset construction
+	-choose first one to construct
+	-research how much data is recommended for RL
+	-try to find how much data karpathy uses in nanochat for RL
+
+> tldr: got infisical secret auth working (quite a slog), managed to load secrets on block laptop. Got env setup working.
+
+11/5/25 wed
+-----------
+-dataset construction
+	X -read/chat little bit about rl envs (sounds more interesting than rl directly on the types of outputs I want)
+		> does sound interesting and I think will lend itself well to the larger model RL I have in mind. But maybe not worth doing with nanochat. Also probably fine to start simple with a more standard preference dataset.
+	X -choose first one to construct
+        > standup transcripts
+    ~ -try scraping
+        > somewhat worked but was hitting timeouts. Maybe sufficient to fallback to existing huggingface dataset for the time being.
+    ~ -construct joke extraction prompt
+        > good start in new prompts dir. Thinking it may be worth trying gemini here, IIRC they have a pretty generous free tier.
+	-research how much data is recommended for RL
+	-try to find how much data karpathy uses in nanochat for RL
+-gpu setup
+	> maybe good not to wait too long on this in case major auth issues pop up. Did most of this on block laptop already so process should be straightforward.
+	-basic block setup (tmux, etc)
+        > turns out workstation seems to often have stockouts 😬. Though maybe partly bc my specific gpu config is "degraded"? Slurm doesn't look like it will support github access very easily. Best bet might be to try new workstation config. Got a gpu-2 machine created, haven't tried starting it yet.
+	-secrets setup
+		-add infisical api key to:
+			-block mac zshrc env var
+			-local bashrc env var
+		-try loading HUGGINGFACE_TOKEN using infisical sdk
+	-try git cloning
+	-try git pushing
+	-try pulling dataset from huggingface hub
+	-try pushing huggingface model to hub
+
+> tldr: got new gpu created after ruling out some options that don't work; chose first task (comedy dataset) and did some webscraping but ultimately reverted to loading hugginface version of dataset; resolved some lib/jupyter issues; put together draft of joke extraction prompt.
+
+11/6/25 thurs
+-------------
+-dataset construction
+    -refin joke extraction prompt in gemini playground
+        > recall: review exampls in more depth. Initial impressions are: some of the subtexts could maybe be a touch more specific, some joke chunks might be a little longer than intended, and also need to see if it left out many jokes.
+    -check gemini api free limits
+        > started looking wed, looks pretty low 😠. Could consider data collection on vertex 😇 or deepseek on gpu?
+    -write some gemini api call utils?
+	-research how much data is recommended for RL
+	-try to find how much data karpathy uses in nanochat for RL
+-gpu setup
+	> maybe good not to wait too long on this in case major auth issues pop up. Did most of this on block laptop already so process should be straightforward.
+	-basic block setup (tmux, etc)
+        > turns out workstation seems to often have stockouts 😬. Though maybe partly bc my specific gpu config is "degraded"? Slurm doesn't look like it will support github access very easily. Best bet might be to try new workstation config. Got a gpu-2 machine created, haven't tried starting it yet.
+	-secrets setup
+		-add infisical api key to:
+			-block mac zshrc env var
+			-local bashrc env var
+		-try loading HUGGINGFACE_TOKEN using infisical sdk
+	-try git cloning
+	-try git pushing
+	-try pulling dataset from huggingface hub
+	-try pushing huggingface model to hub
+

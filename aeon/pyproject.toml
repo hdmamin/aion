@@ -4,7 +4,12 @@ version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "infisicalsdk>=1.0.3"
+    "beautifulsoup4>=4.14.2",
+    "datasets>=4.4.1",
+    "infisicalsdk>=1.0.3",
+    "lxml>=6.0.2",
+    "pandas>=2.3.3",
+    "tqdm>=4.67.1",
 ]
 
 [dependency-groups]
@@ -24,3 +29,4 @@ python_functions = ["test_*"]
 
 [tool.uv]
 index-url = "https://pypi.org/simple/"
+package = true

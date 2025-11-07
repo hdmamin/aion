@@ -8,6 +8,7 @@ dependencies = [
     "datasets>=4.4.1",
     "infisicalsdk>=1.0.3",
     "lxml>=6.0.2",
+    "openai>=2.7.1",
     "pandas>=2.3.3",
     "tqdm>=4.67.1",
 ]

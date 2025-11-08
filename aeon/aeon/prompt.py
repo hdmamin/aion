@@ -35,7 +35,7 @@ class Prompt:
         """
         self.name = name
         self.prompt = importlib.import_module(f"aeon.prompts.{name}")
-        self.kwargs = {**self.default_kwargs, **self.prompt.kwargs, **kwargs}
+        self.kwargs = self.default_kwargs | self.prompt.kwargs | **kwargs
 
         # Last message is dynamic, preceding messages are static.
         self.static_messages = self.prompt.messages[:-1]
@@ -45,7 +45,7 @@ class Prompt:
         # The vars the user must pass in to messages().
         self.variables = template_varnames(self.last_template)
 
-    def messages(self, **kwargs) -> list[dict]:
+    def render(self, **kwargs) -> list[dict]:
         """Rendered `messages` for api call. User must pass in kwargs for all variables in
         `self.variables`. These will be inserted into the last message.
         """
@@ -55,11 +55,11 @@ class Prompt:
         }
         return self.static_messages + [last_message]
 
-    def all_kwargs(self, **kwargs) -> dict:
+    def kwargs(self, **kwargs) -> dict:
         """Get all kwargs for api call, including rendered `messages`. User must provide kwargs for
         all variables in `self.variables` to insert into the last message.
         """
-        return {**self.kwargs, "messages": self.messages(**kwargs)}
+        return {**self.kwargs, "messages": self.render(**kwargs)}
 
     def __str__(self):
         return f"{type(self).__name__}(name={self.name})"

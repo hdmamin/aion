@@ -5,7 +5,9 @@ labeler = Labeler(prompt="extract_jokes")
 df_labeled = labeler.label(df.id, df.text, output_dir="data/labeled", threads=10)
 """
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from tqdm.auto import tqdm
+from typing import Union
 import traceback
 import yaml
 
@@ -13,9 +15,11 @@ from openai import OpenAI
 from openai.types.chat.parsed_chat_completion import ParsedChatCompletion
 import pandas as pd
 
+from aeon.config import PROJECT_ROOT
 from aeon.logger import logger
 from aeon.prompt import Prompt
 from aeon.secrets import SecretManager
+from aeon.utils import timestamp
 
 
 class LLMLabeler:
@@ -23,10 +27,17 @@ class LLMLabeler:
     # TODO: consider whether these should be passed in to label method instead? Or if we even need
     # class? IIRC i found myself mostly wanting this to access metadata but maybe if we return it
     # that's sufficient?
-    def __init__(self, prompt: str, **kwargs):
+    def __init__(
+        self,
+        prompt: str,
+        parent_dir: Union[str, Path] = PROJECT_ROOT/"data/labels",
+        **kwargs,
+    ):
         SecretManager().set_secrets()
         self.prompt = Prompt(prompt, **kwargs)
         self.client = OpenAI()
+        self.dir = Path(parent_dir)/prompt/timestamp()
+        self.dir.mkdir(parents=True, exist_ok=False)
 
     def label(self, df: pd.DataFrame, max_workers: int = 15) -> dict:
         missing_vars = set(self.prompt.variables) - set(df.columns)

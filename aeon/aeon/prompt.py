@@ -2,6 +2,7 @@ import importlib
 from string import Template
 
 from aeon import prompts
+from aeon.logging import logger
 
 
 def template_varnames(template: Template) -> list[str]:
@@ -16,6 +17,12 @@ def template_varnames(template: Template) -> list[str]:
 
 
 class Prompt:
+    """
+    prompt = Prompt("extract_jokes")
+    prompt.variables  # See what vars need to be provided to render prompt
+    prompt.render(color="blue", shape="triangle")  # Get list of messages with variables filled in.
+    prompt.kwargs(color="blue", shape="triangle")  # Get all kwargs to pass to openai api call.
+    """
 
     default_kwargs = {
         "model": "gpt-4.1-nano",
@@ -36,6 +43,10 @@ class Prompt:
         self.name = name
         self.prompt = importlib.import_module(f"aeon.prompts.{name}")
         self.kwargs = self.default_kwargs | self.prompt.kwargs | **kwargs
+        if "response_format" not in self.kwargs:
+            logger.warning(
+                f"No response_format specified for prompt {name}. We recommend providing one."
+            )
 
         # Last message is dynamic, preceding messages are static.
         self.static_messages = self.prompt.messages[:-1]

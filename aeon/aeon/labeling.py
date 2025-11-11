@@ -6,12 +6,14 @@ df_labeled = labeler.label(df.id, df.text, output_dir="data/labeled", threads=10
 """
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from tenacity import retry, stop_after_attempt, wait_exponential, before_sleep_log
 from tqdm.auto import tqdm
 from typing import Union
 import traceback
 import yaml
 
 from openai import OpenAI
+from openai._exceptions import RateLimitError, InternalServerError
 from openai.types.chat.parsed_chat_completion import ParsedChatCompletion
 import pandas as pd
 
@@ -68,7 +70,9 @@ class LLMLabeler:
                         responses.append(future.result())
                         progress_bar.update(1)  
                 except KeyboardInterrupt:
-                    logger.info("Canceling labeling job. Previously launched API calls will still run.")
+                    logger.info(
+                        "Canceling labeling job. Previously launched API calls will still run."
+                    )
                     results["completed"] = False
                     for future in futures:
                         future.cancel()
@@ -102,17 +106,36 @@ class LLMLabeler:
             "response": None,
             "api_kwargs": {},
         }
-        # TODO: more granular error messages for troubleshooting? Or maybe the fact that the error
-        # will naturally be different depending on what fails is sufficient.
+        res["api_kwargs"] = self.prompt.kwargs(**kwargs)
         try:
-            res["api_kwargs"] = self.prompt.kwargs(**kwargs)
-            response = self.client.chat.completions.parse(**res["api_kwargs"])
+            response = retryable_api_call(**res["api_kwargs"])
             res["response"] = response.model_dump_json()
         except Exception as e:
             logger.error("row {i} failed with error: {e}")
             res["success"] = False
             res["error"] = traceback.format_exc()
 
+        # Nice to have this if the job fails late or to let us peek at results early.
         with open(self.output_dir/f"{i}.json", "w") as f:
             json.dump(res, f)
         return res
+
+
+@retry(
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type((RateLimitError, InternalServerError)),
+    wait=wait_chain(wait_fixed(6), wait_fixed(60)),
+    before_sleep=before_sleep_log(logger, logging.WARNING)
+)
+def retryable_api_call(**kwargs):
+    """Wrapper to make api call retryable. To keep things simple, we just retry once after
+    6 seconds and again after 60 seconds.
+    """
+    # TODO: maybe add gemini/claude support eventually?
+    # Need to confirm if 1) they support "developer" role and 2) pydantic schemas (recall google
+    # used typeddict last I checked, but maybe they handled that if supporting openai lib).
+    # Useful link on adding google support:
+    # https://ai.google.dev/gemini-api/docs/openai
+    # And for anthropic:
+    # https://docs.claude.com/en/api/openai-sdk
+    return self.client.chat.completions.parse(**kwargs)

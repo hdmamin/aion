@@ -1,8 +1,11 @@
 import importlib
+from pathlib import Path
 from string import Template
+from typing import Callable
 
 from aeon import prompts
 from aeon.logging import logger
+from aeon.decorators import tab_completion
 
 
 def template_varnames(template: Template) -> list[str]:
@@ -10,9 +13,9 @@ def template_varnames(template: Template) -> list[str]:
     not ${variable} syntax.
     """
     return [
-        match.group("named")
-        for match in Template.pattern.finditer(template.template)
-        if match.group("named")
+        m.group("named")
+        for m in Template.pattern.finditer(template.template)
+        if m.group("named")
     ]
 
 
@@ -42,8 +45,8 @@ class Prompt:
         """
         self.name = name
         self.prompt = importlib.import_module(f"aeon.prompts.{name}")
-        self.kwargs = self.default_kwargs | self.prompt.kwargs | **kwargs
-        if "response_format" not in self.kwargs:
+        self._kwargs = self.default_kwargs | self.prompt.kwargs | kwargs
+        if "response_format" not in self._kwargs:
             logger.warning(
                 f"No response_format specified for prompt {name}. We recommend providing one."
             )
@@ -70,7 +73,23 @@ class Prompt:
         """Get all kwargs for api call, including rendered `messages`. User must provide kwargs for
         all variables in `self.variables` to insert into the last message.
         """
-        return {**self.kwargs, "messages": self.render(**kwargs)}
+        return {**self._kwargs, "messages": self.render(**kwargs)}
 
     def __str__(self):
         return f"{type(self).__name__}(name={self.name})"
+
+
+def list_prompts() -> list[str]:
+    """Return aeon's available prompt names."""
+    prompt_dir = Path(__file__).parent/"prompts"
+    return [path.stem for path in prompt_dir.iterdir() if path.suffix == ".py"]
+
+
+@tab_completion(list_prompts)
+class Prompts:
+    """
+    Examples
+    --------
+    # You are creating a prompt. At this point if you hit <tab>, you will see available options.
+    Prompt(Prompts.
+    """

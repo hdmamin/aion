@@ -13,8 +13,9 @@ class Response(BaseModel):
 
     prompt: str = Field(
         ...,
-        description="A one line comment or question that you imagine could have elicited this "
-                    "joke in conversation, from the comic's interlocutor."
+        description="A one line comment or question from an imaginary interlocutor that could "
+                    " elicit this joke in conversation. Another framing: what might someone say to "
+                    "a funny chatbot that could plausibly elicit the relevant `joke`?"
     )
         
     subtext: str = Field(
@@ -74,6 +75,6 @@ The past couple years, I’ve done a lot of work on myself. And I’ve realized 
 
 kwargs = {
     "model": "gpt-4.1",
-    "temperature": 0.3,
+    "temperature": 0.0,
     "response_format": BatchResponse,
 }

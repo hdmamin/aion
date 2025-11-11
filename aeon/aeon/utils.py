@@ -44,5 +44,5 @@ def timer(name: str = "BLOCK") -> dict:
         res = {"start": time.perf_counter()}
         yield res
     finally:
-        res["duration"] = time.perf_counter() - start
+        res["duration"] = time.perf_counter() - res["start"]
         logger.info(f"[TIMER] {name} executed in {res['duration']:.3f} s.")

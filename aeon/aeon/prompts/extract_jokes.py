@@ -77,6 +77,6 @@ kwargs = {
     "model": "gpt-4.1",
     "temperature": 0.0,
     "response_format": BatchResponse,
-    # Storage can add up fast, n=3 basically 10x's storage size vs no logprobs.
+    # Storage can add up fast, n=3 basically 10x's intermediate (json) storage size vs no logprobs.
     "top_logprobs": 3,
 }

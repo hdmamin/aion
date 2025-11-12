@@ -31,7 +31,6 @@ class Prompt:
         "model": "gpt-4.1-nano",
         "temperature": 0.0,
         "logprobs": True,
-        "top_logprobs": 10,
     }
 
     def __init__(self, name: str, **kwargs):

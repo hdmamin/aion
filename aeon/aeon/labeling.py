@@ -38,36 +38,54 @@ class LLMLabeler:
     # that's sufficient?
     def __init__(
         self,
-        prompt: str,
+        prompt_name: str,
         parent_dir: Union[str, Path] = PROJECT_ROOT/"data/labels",
-        **kwargs,
     ):
         """
-        kwargs : any
-            Forwarded to Prompt as openai api kwargs.
-            E.g. `model="gpt-4.1-nano"` or `temperature=0.3`
+        Parameters
+        ----------
+        prompt_name : str
+            Name of aeon prompt to load. aeon.prompt.Prompts provides tab completion for available
+            values. (We specify this here on the premise that this will remain relatively fixed
+            from run to run, whereas the args we pass to `label` are more likely to vary run to
+            run.)
         """
         SecretManager().set_secrets()
-        self.prompt = Prompt(prompt, **kwargs)
         self.client = OpenAI()
         self.parent_dir = Path(parent_dir)
+        self.prompt_name = prompt_name
+
         # Will set these in `label` method.
         self.output_dir = None
         self.batch_subdir = None
+        self.prompt = None
 
-    def label(self, df: pd.DataFrame, max_workers: int = 15, cleanup: bool = True) -> dict:
+    def label(
+        self,
+        df: pd.DataFrame,
+        max_workers: int = 15,
+        cleanup: bool = True,
+        **kwargs
+    ) -> dict:
         """
-        Arguments
-        ---------
+        Parameters
+        ----------
         cleanup : bool
             If True, delete `batches` subdir when labeling completes IF a job completes without
             keyboard interrupt. This can reclaim quite a bit of space for large runs and we have
             this data in a parquet anyway.
+        kwargs : any
+            Forwarded to Prompt (e.g. temperature, model, logprobs).
         """
-        self.output_dir = self.parent_dir/f"{self.prompt.name}/{timestamp()}-{git_hash()}"
+        self.prompt = Prompt(self.prompt_name, **kwargs)
+        self.output_dir = self.parent_dir/f"{self.prompt_name}/{timestamp()}-{git_hash()}"
         self.batch_dir = self.output_dir/"batches"
-        self.batch_dir.mkdir(parents=True, exist_ok=False)
+
         logger.info(f"Labels will be saved in {self.output_dir}")
+        self.batch_dir.mkdir(parents=True, exist_ok=False)
+        schema_cls = self.prompt._kwargs["response_format"]
+        with open(self.output_dir/"response_format.json", "w") as f:
+            json.dump(schema_cls.model_json_schema(), f)
 
         missing_vars = set(self.prompt.variables) - set(df.columns)
         if missing_vars:

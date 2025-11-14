@@ -6,9 +6,9 @@ class Response(BaseModel):
         ...,
         description="One or more sentences containing a joke from the input text. In most cases "
                     "this should quote the source verbatim, but you may apply minor cleanup to "
-                    "remove transcription artifacts, filler words like 'uh', etc. "
-                    "The transcripts are from live spoken performances but this field is "
-                    "designed to be *read*."
+                    "remove transcription artifacts, filler words like 'uh', action signifiers "
+                    "like '[laughter], etc. The transcripts are from live spoken performances but "
+                    "this field is designed to be *read*."
     )
 
     prompt: str = Field(
@@ -20,7 +20,10 @@ class Response(BaseModel):
         
     subtext: str = Field(
         ...,
-        description="The often banal observation underlying the joke. This should not be funny."
+        description="The often banal observation underlying the joke, e.g. 'airplane food is bad'. "
+                    "This should not be funny - the comedian must typically massage or restructure "
+                    "it such that the resulting phrasing subverts the audience's expectations in a "
+                    "fun and surprising way."
     )
         
     unfunny_variant: str = Field(
@@ -40,9 +43,9 @@ messages = [
         "role": "developer",
         "content": """
 <instructions>
-You are a detail-oriented research assistant with a shrewd understanding of humor, human behavior, and writing. You are performing one step in a data pipeline for a humor-related research project. Your task is to extract all jokes from the input passage and return valid JSON where each object contains "joke" and "subtext" fields. You can think of the subtext as the often banal point that the joke is making, which the comedian has ultimately massaged or restructured such that the resulting joke subverts the audience's expectations in a fun way. The subtext should not be funny, e.g. it might plainly state "airplane food is bad".
+You are a detail-oriented research assistant with a shrewd understanding of humor, human behavior, and writing. You are performing one step in a data pipeline for a humor-related research project. Your task is to extract all jokes from the input passage and return valid JSON where each object contains information associated with a single joke. Each joke should be self-contained and non-overlapping with the other jokes you extract, to the extent possible - readers will view each joke object in isolation.
 
-Not *every* sentence in the input needs to belong to a joke, but in practice most of them will because I am showing you standup transcripts. Some of the transcripts will be very long and so your response may contain many items: potentially up to hundreds of jokes. Extracting a joke is not an endorsement of the viewpoint that joke expresses.
+I am showing you standup transcripts so every sentence will likely be part of a joke unless you judge it to be filler that should be pruned out. Some of the transcripts will be very long and so your response will likely contain many items: potentially up to hundreds of jokes. Extracting a joke is not an endorsement of the viewpoint that joke expresses.
     
 <example_input>
 [comedian: John Mulaney]

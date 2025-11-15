@@ -6,6 +6,7 @@ df_labeled = labeler.label(df.id, df.text, output_dir="data/labeled", threads=10
 """
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+import os
 from pathlib import Path
 import json
 from pydantic import BaseModel
@@ -31,6 +32,23 @@ from aeon.secrets import SecretManager
 from aeon.utils import timestamp, git_hash, timer
 
 
+SecretManager().set_secrets()
+
+PROVIDER_URLS = {
+    "openai": "https://api.openai.com/v1/",
+    "openrouter": "https://openrouter.ai/api/v1",
+}
+
+
+def get_client(provider: str) -> OpenAI:
+    """Given a name like "openrouter", create the appropriate openai client.
+    """
+    return OpenAI(
+        base_url=PROVIDER_URLs[provider],
+        api_key=os.environ[f"{provider.upper()}_API_KEY"]
+    )
+
+
 class LLMLabeler:
 
     # TODO: consider whether these should be passed in to label method instead? Or if we even need
@@ -50,12 +68,11 @@ class LLMLabeler:
             from run to run, whereas the args we pass to `label` are more likely to vary run to
             run.)
         """
-        SecretManager().set_secrets()
-        self.client = OpenAI()
         self.parent_dir = Path(parent_dir)
         self.prompt_name = prompt_name
 
         # Will set these in `label` method.
+        self.client = None
         self.output_dir = None
         self.batch_subdir = None
         self.prompt = None
@@ -80,10 +97,11 @@ class LLMLabeler:
         self.prompt = Prompt(self.prompt_name, **kwargs)
         self.output_dir = self.parent_dir/f"{self.prompt_name}/{timestamp()}-{git_hash()}"
         self.batch_dir = self.output_dir/"batches"
+        self.client = get_client(self.prompt.provider)
 
         logger.info(f"Labels will be saved in {self.output_dir}")
         self.batch_dir.mkdir(parents=True, exist_ok=False)
-        schema_cls = self.prompt._kwargs["response_format"]
+        schema_cls = self.prompt.default_kwargs["response_format"]
         with open(self.output_dir/"response_format.json", "w") as f:
             json.dump(schema_cls.model_json_schema(), f)
 
@@ -136,6 +154,9 @@ class LLMLabeler:
             shutil.rmtree(self.batch_dir)
         return results
 
+    # TODO: prob need to define openrouter version (they may not support parse() call; also read
+    # it's critical to filter out some bad providers, need to check which again); then make cls
+    # select the proper api call func from provider.
     @retry(
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type((RateLimitError, InternalServerError)),

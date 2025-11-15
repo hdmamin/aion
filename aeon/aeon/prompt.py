@@ -1,11 +1,12 @@
 import importlib
+from openai import OpenAI
 from pathlib import Path
 from string import Template
 from typing import Callable
 
 from aeon import prompts
-from aeon.logging import logger
 from aeon.decorators import tab_completion
+from aeon.logging import logger
 
 
 def template_varnames(template: Template) -> list[str]:
@@ -27,7 +28,7 @@ class Prompt:
     prompt.kwargs(color="blue", shape="triangle")  # Get all kwargs to pass to openai api call.
     """
 
-    default_kwargs = {
+    _default_kwargs = {
         "model": "gpt-4.1-nano",
         "temperature": 0.0,
         "logprobs": True,
@@ -44,11 +45,13 @@ class Prompt:
         """
         self.name = name
         self.prompt = importlib.import_module(f"aeon.prompts.{name}")
-        self._kwargs = self.default_kwargs | self.prompt.kwargs | kwargs
-        if "response_format" not in self._kwargs:
+        self.default_kwargs = self._default_kwargs | self.prompt.kwargs | kwargs
+        if "response_format" not in self.default_kwargs:
             logger.warning(
                 f"No response_format specified for prompt {name}. We recommend providing one."
             )
+
+        self.provider = infer_provider(self.default_kwargs["model"])
 
         # Last message is dynamic, preceding messages are static.
         self.static_messages = self.prompt.messages[:-1]
@@ -72,10 +75,23 @@ class Prompt:
         """Get all kwargs for api call, including rendered `messages`. User must provide kwargs for
         all variables in `self.variables` to insert into the last message.
         """
-        return {**self._kwargs, "messages": self.render(**kwargs)}
+        return {**self.default_kwargs, "messages": self.render(**kwargs)}
 
     def __str__(self):
         return f"{type(self).__name__}(name={self.name})"
+
+
+def infer_provider(model: str) -> str:
+    """
+    Infer LLM provider name based on model. For now we keep it simple and support just openai and
+    openrouter (technically can call openai through openrouter but I believe it's more expensive).
+    """
+    if "gpt" in model:
+        provider = "openai"
+    else:
+        provider = "openrouter"
+    # TODO: add more providers?
+    return provider
 
 
 def list_prompts() -> list[str]:

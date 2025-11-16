@@ -33,6 +33,11 @@ class Prompt:
         "temperature": 0.0,
         "logprobs": True,
     }
+    _default_kwargs_gpt_5 = {
+        "reasoning_effort": "minimal",
+        "verbosity": "low",
+    }
+    _unsupported_kwargs_gpt_5 = {"logprobs", "top_logprobs", "temperature"}
 
     def __init__(self, name: str, **kwargs):
         """
@@ -45,7 +50,7 @@ class Prompt:
         """
         self.name = name
         self.prompt = importlib.import_module(f"aeon.prompts.{name}")
-        self.default_kwargs = self._default_kwargs | self.prompt.kwargs | kwargs
+        self.default_kwargs = self._resolve_kwargs(**self.prompt.kwargs | kwargs)
         if "response_format" not in self.default_kwargs:
             logger.warning(
                 f"No response_format specified for prompt {name}. We recommend providing one."
@@ -60,6 +65,25 @@ class Prompt:
 
         # The vars the user must pass in to messages().
         self.variables = template_varnames(self.last_template)
+
+    def _resolve_kwargs(self, **user_kwargs) -> dict:
+        """Resolve kwargs from cls defaults, the imported prompt, and the kwargs passed into init.
+        Init kwargs take priority over imported prompt kwargs which take priority over cls defaults.
+        gpt-5 models have some quirks that we handle here as well, eventually might need to refactor
+        if more models turn out to have different/unsupported kwargs.
+        """
+        # Notice this includes 5.1 variants.
+        if "gpt-5" in user_kwargs.get("model", ""):
+            defaults = self._default_kwargs_gpt_5
+            unsupported = {
+                k: v for k, v in user_kwargs.items()
+                if k in self._unsupported_kwargs_gpt_5 and v is not None
+            }
+            if unsupported:
+                raise ValueError(f"gpt-5 should not specify these params: {unsupported}")
+        else:
+            defaults = self._default_kwargs
+        return defaults | user_kwargs
 
     def render(self, **kwargs) -> list[dict]:
         """Rendered `messages` for api call. User must pass in kwargs for all variables in

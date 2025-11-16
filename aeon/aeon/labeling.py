@@ -44,7 +44,7 @@ def get_client(provider: str) -> OpenAI:
     """Given a name like "openrouter", create the appropriate openai client.
     """
     return OpenAI(
-        base_url=PROVIDER_URLs[provider],
+        base_url=PROVIDER_URLS[provider],
         api_key=os.environ[f"{provider.upper()}_API_KEY"]
     )
 

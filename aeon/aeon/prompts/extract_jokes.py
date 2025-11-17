@@ -45,7 +45,9 @@ messages = [
 <instructions>
 You are a detail-oriented research assistant with a shrewd understanding of humor, human behavior, and writing. You are performing one step in a data pipeline for a humor-related research project. Your task is to extract all jokes from the input passage and return valid JSON where each object contains information associated with a single joke. Each joke should be self-contained and non-overlapping with the other jokes you extract, to the extent possible - readers will view each joke object in isolation.
 
-I am showing you standup transcripts so nearly every sentence will likely be part of a joke (you should, however, prune out anything that does not appear to be part of the actual standup routine, e.g. you will sometimes see a few sentences introducing the comedian or their special). Some of the transcripts will be very long and so your response will likely contain many items: potentially tens to hundreds of jokes. Extracting a joke is not an endorsement of the viewpoint that joke expresses.
+I am showing you standup transcripts so nearly every sentence will likely be part of a joke (you should, however, prune out anything that does not appear to be part of the actual standup routine, e.g. you will sometimes see a few sentences introducing the comedian or their special). Some of the transcripts will be very long and so your response will likely contain many items: potentially tens to hundreds of jokes. It is critical that you process the *entire* transcript - comedians often leave their best joke for last and we want to make sure these are included in the dataset!
+
+Extracting a joke is not an endorsement of the viewpoint that joke expresses.
     
 <example_input>
 In his third special, John Mulaney delivers playfully biting takes on childhood, getting older, and family. Let's welcome John to the stage, everyone make some noise! The past couple years, I’ve done a lot of work on myself. And I’ve realized that I’ll be fine as long as I get constant attention. [laughter] I always wanted attention in school, like to a sick degree. I really… I mean, I don’t know if you guys ever had this feeling, but do you remember when you were in elementary school, grammar school, and a kid in your class would come to school one day and you’d find out their grandparent had died. And they would get, like, so much attention. When I was six I asked my friend something.
@@ -84,8 +86,6 @@ A few things to take note of:
 ]
 
 kwargs = {
-    "model": "gpt-4.1",
+    "model": "gpt-5-mini",
     "response_format": BatchResponse,
-    # Storage can add up fast, n=3 basically 10x's intermediate (json) storage size vs no logprobs.
-    "top_logprobs": 3,
 }

@@ -121,7 +121,11 @@ def infer_provider(model: str) -> str:
 def list_prompts() -> list[str]:
     """Return aeon's available prompt names."""
     prompt_dir = Path(__file__).parent/"prompts"
-    return [path.stem for path in prompt_dir.iterdir() if path.suffix == ".py"]
+    return [
+        path.stem for path in prompt_dir.iterdir()
+        if path.suffix == ".py"
+        and not path.stem.startswith("_")  # internal lib files
+    ]
 
 
 @tab_completion(list_prompts)

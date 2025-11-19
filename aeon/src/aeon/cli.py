@@ -24,7 +24,7 @@ def make_prompt(name: str):
         Should not include a file suffix.
     """
     file_name = name.lower().replace(" ", "_").replace("-", "_").replace(".", "")
-    prompt_dir = Path(__file__)/"prompts"
+    prompt_dir = Path(__file__).parent/"prompts"
     file_path = prompt_dir/f"{file_name}.py"
     shutil.copy(prompt_dir/"_template.py", file_path)
     print(f"New prompt template at {file_path} is ready to be updated.")

@@ -64,9 +64,8 @@ Ranking is pretty subjective so there are plenty of valid orders here. Personall
 ]
 
 kwargs = {
-    # TODO: could also try gemma-3-27b-it or look for other models. Not gpt-5 bc I want high temperature.
+    # TODO: wanted non-gpt-5 model so I could set high temperature, but openrouter is being flaky.
     # "model": "dphn/Dolphin-Mistral-24B-Venice-Edition",
-    # Rate limiting kicking in even w/ rps=5 though, may need to switch to a paid model.
     "model": "gpt-5-mini",
     "response_format": Response,
 }

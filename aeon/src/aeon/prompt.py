@@ -37,7 +37,15 @@ class Prompt:
         "reasoning_effort": "minimal",
         "verbosity": "low",
     }
-    _unsupported_kwargs_gpt_5 = {"logprobs", "top_logprobs", "temperature"}
+    _unsupported_kwargs = {
+        "model": {
+            "gpt_5": {"logprobs", "top_logprobs", "temperature"},
+        },
+        "provider": {
+            # TODO: not actually sure if this is true for all providers/models, just warn for now
+            "openrouter": {"logprobs", "top_logprobs"},
+        }
+    }
 
     def __init__(self, name: str, **kwargs):
         """
@@ -57,6 +65,13 @@ class Prompt:
             )
 
         self.provider = infer_provider(self.default_kwargs["model"])
+        unsupported = self._unsupported_kwargs["provider"].get(self.provider, set()) \
+            & set(self.default_kwargs)
+        if unsupported:
+            logger.warning(
+                f"Received possibly unsupported kwargs {unsupported!r} for provider "
+                f"{self.provider!r}."
+            )
 
         # Last message is dynamic, preceding messages are static.
         self.static_messages = self.prompt.messages[:-1]
@@ -77,7 +92,7 @@ class Prompt:
             defaults = self._default_kwargs_gpt_5
             unsupported = {
                 k: v for k, v in user_kwargs.items()
-                if k in self._unsupported_kwargs_gpt_5 and v is not None
+                if k in self._unsupported_kwargs["model"]["gpt_5"] and v is not None
             }
             if unsupported:
                 raise ValueError(f"gpt-5 should not specify these params: {unsupported}")

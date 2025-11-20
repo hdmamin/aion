@@ -25,7 +25,7 @@ from openai._exceptions import RateLimitError, InternalServerError
 from openai.types.chat.parsed_chat_completion import ParsedChatCompletion
 import pandas as pd
 
-from aeon.config import PROJECT_ROOT
+from aeon.config import DATA_DIR
 from aeon.logging import logger
 from aeon.prompt import Prompt
 from aeon.secrets import SecretManager
@@ -57,7 +57,7 @@ class LLMLabeler:
     def __init__(
         self,
         prompt_name: str,
-        parent_dir: Union[str, Path] = PROJECT_ROOT/"data/labels",
+        parent_dir: Union[str, Path] = DATA_DIR/"labels",
     ):
         """
         Parameters
